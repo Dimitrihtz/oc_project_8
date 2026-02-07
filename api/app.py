@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI
 
+from api.middleware import LOG_DIR, PredictionLoggingMiddleware
 from api.schemas import CreditFeatures, HealthResponse, PredictionResponse
 
 MODEL_PATH = Path("results/lightgbm_optimized.pkl")
@@ -16,6 +17,7 @@ model = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
     yield
@@ -27,6 +29,7 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+app.add_middleware(PredictionLoggingMiddleware)
 
 
 @app.get("/health", response_model=HealthResponse)
