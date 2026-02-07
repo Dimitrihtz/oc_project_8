@@ -1,0 +1,58 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+wheels/
+*.egg-info
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Data files (large)
+data/*.csv
+data/*.parquet
+data/*.pkl
+data/*.pickle
+!data/HomeCredit_columns_description.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
