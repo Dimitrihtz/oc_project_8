@@ -1,0 +1,13 @@
+.venv/
+.git/
+data/
+mlruns/
+mlflow.db
+*.ipynb
+tests/
+results/xgboost_optimized.pkl
+results/*.csv
+results/*.json
+__pycache__/
+*.pyc
+.DS_Store
