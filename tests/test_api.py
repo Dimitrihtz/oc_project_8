@@ -40,17 +40,17 @@ def test_health_model_loaded():
 
 def test_model_is_loaded():
     with TestClient(app):
-        assert app_module.model is not None
+        assert app_module.session is not None
 
 
 def test_model_has_10_features():
     with TestClient(app):
-        assert len(app_module.model.feature_name_) == 10
+        assert app_module.session.get_inputs()[0].shape[1] == 10
 
 
 def test_model_has_2_classes():
     with TestClient(app):
-        assert len(app_module.model.classes_) == 2
+        assert len(app_module.session.get_outputs()) == 2
 
 
 # === Valid prediction ===

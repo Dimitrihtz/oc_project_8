@@ -1,25 +1,37 @@
-import pickle
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import pandas as pd
+import numpy as np
+import onnxruntime as ort
 from fastapi import FastAPI
 
 from api.middleware import LOG_DIR, PredictionLoggingMiddleware
 from api.schemas import CreditFeatures, HealthResponse, PredictionResponse
 
-MODEL_PATH = Path("results/lightgbm_optimized.pkl")
+ONNX_MODEL_PATH = Path("results/lightgbm_optimized.onnx")
 OPTIMAL_THRESHOLD = 0.10
 
-model = None
+FEATURE_ORDER = [
+    "EXT_SOURCES_MEAN",
+    "CREDIT_TERM",
+    "EXT_SOURCE_3",
+    "GOODS_PRICE_CREDIT_PERCENT",
+    "INSTAL_AMT_PAYMENT_sum",
+    "AMT_ANNUITY",
+    "POS_CNT_INSTALMENT_FUTURE_mean",
+    "DAYS_BIRTH",
+    "EXT_SOURCES_WEIGHTED",
+    "EXT_SOURCE_2",
+]
+
+session = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model
+    global session
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    with open(MODEL_PATH, "rb") as f:
-        model = pickle.load(f)
+    session = ort.InferenceSession(str(ONNX_MODEL_PATH))
     yield
 
 
@@ -36,21 +48,24 @@ app.add_middleware(PredictionLoggingMiddleware)
 def health():
     return HealthResponse(
         status="healthy",
-        model_loaded=model is not None,
+        model_loaded=session is not None,
     )
 
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(features: CreditFeatures):
-    df = pd.DataFrame([features.model_dump()])
-    df = df[model.feature_name_]
+    data = features.model_dump()
+    row = np.array([[data[f] for f in FEATURE_ORDER]], dtype=np.float32)
 
-    probability = model.predict_proba(df)[0, 1]
+    input_name = session.get_inputs()[0].name
+    result = session.run(None, {input_name: row})
+    probability = float(result[1][0][1])
+
     prediction = int(probability >= OPTIMAL_THRESHOLD)
     credit_decision = "denied" if prediction == 1 else "approved"
 
     return PredictionResponse(
         prediction=prediction,
-        probability_default=round(float(probability), 6),
+        probability_default=round(probability, 6),
         credit_decision=credit_decision,
     )
