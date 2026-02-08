@@ -18,6 +18,7 @@ dependencies = [
     "optuna>=4.6.0",
     "missingno>=0.5.2",
     "evidently>=0.7.20",
+    "streamlit>=1.50.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -41,6 +42,11 @@ optimization = [
 ]
 monitoring = [
     "evidently>=0.5.0",
+]
+frontend = [
+    "streamlit>=1.30.0",
+    "requests>=2.31.0",
+    "plotly>=5.18.0",
 ]
 
 [tool.pytest.ini_options]
