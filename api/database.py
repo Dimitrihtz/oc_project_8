@@ -2,17 +2,21 @@ import logging
 import os
 
 from sqlalchemy import (
+    Column,
     DateTime,
     Double,
     Float,
+    Integer,
     MetaData,
     SmallInteger,
     String,
+    Table,
     Text,
+    desc,
     func,
     insert,
+    select,
 )
-from sqlalchemy import Column, Integer, Table
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
@@ -90,3 +94,17 @@ async def insert_prediction(log_entry: dict):
             )
     except Exception:
         logger.exception("Failed to insert prediction into PostgreSQL")
+
+
+async def get_predictions(limit: int = 50, offset: int = 0) -> list[dict]:
+    if _engine is None:
+        return []
+
+    async with _engine.connect() as conn:
+        result = await conn.execute(
+            select(predictions)
+            .order_by(desc(predictions.c.timestamp))
+            .limit(limit)
+            .offset(offset)
+        )
+        return [row._asdict() for row in result]

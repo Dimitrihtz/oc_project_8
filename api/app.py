@@ -5,9 +5,14 @@ import numpy as np
 import onnxruntime as ort
 from fastapi import FastAPI, HTTPException
 
-from api.database import close_db, init_db
+from api.database import close_db, get_predictions, init_db, is_db_enabled
 from api.middleware import LOG_DIR, PredictionLoggingMiddleware
-from api.schemas import CreditFeatures, HealthResponse, PredictionResponse
+from api.schemas import (
+    CreditFeatures,
+    HealthResponse,
+    PredictionLog,
+    PredictionResponse,
+)
 
 ONNX_MODEL_PATH = Path("results/lightgbm_optimized.onnx")
 OPTIMAL_THRESHOLD = 0.10
@@ -53,6 +58,13 @@ def health():
         status="healthy",
         model_loaded=session is not None,
     )
+
+
+@app.get("/predictions", response_model=list[PredictionLog])
+async def list_predictions(limit: int = 50, offset: int = 0):
+    if not is_db_enabled():
+        raise HTTPException(status_code=503, detail="Database not available")
+    return await get_predictions(limit=limit, offset=offset)
 
 
 @app.post("/predict", response_model=PredictionResponse)
