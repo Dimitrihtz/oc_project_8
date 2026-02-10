@@ -54,6 +54,12 @@ data/*.pickle
 .DS_Store
 Thumbs.db
 
+# Coverage reports
+htmlcov/
+coverage.xml
+.pytest_cache/
+.coverage
+
 # Logs
 *.log
 logs/
