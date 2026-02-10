@@ -5,6 +5,7 @@ import numpy as np
 import onnxruntime as ort
 from fastapi import FastAPI
 
+from api.database import close_db, init_db
 from api.middleware import LOG_DIR, PredictionLoggingMiddleware
 from api.schemas import CreditFeatures, HealthResponse, PredictionResponse
 
@@ -32,7 +33,9 @@ async def lifespan(app: FastAPI):
     global session
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     session = ort.InferenceSession(str(ONNX_MODEL_PATH))
+    await init_db()
     yield
+    await close_db()
 
 
 app = FastAPI(

@@ -1,5 +1,4 @@
 import json
-import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,10 +7,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from api.database import insert_prediction, is_db_enabled
+
 LOG_DIR = Path("logs")
 LOG_FILE = LOG_DIR / "predictions.jsonl"
-
-_lock = threading.Lock()
 
 
 class PredictionLoggingMiddleware(BaseHTTPMiddleware):
@@ -49,7 +48,9 @@ class PredictionLoggingMiddleware(BaseHTTPMiddleware):
             "error": response_data.get("detail") if response.status_code >= 400 else None,
         }
 
-        with _lock:
+        if is_db_enabled():
+            await insert_prediction(log_entry)
+        else:
             with open(LOG_FILE, "a") as f:
                 f.write(json.dumps(log_entry) + "\n")
 

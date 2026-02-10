@@ -30,9 +30,12 @@ api = [
     "uvicorn[standard]>=0.34.0",
     "httpx>=0.27.0",
     "onnxruntime>=1.17.0",
+    "psycopg[binary]>=3.1.0",
+    "sqlalchemy>=2.0.0",
 ]
 test = [
     "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
     "httpx>=0.27.0",
 ]
 optimization = [
@@ -52,3 +55,17 @@ frontend = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["api"]
+branch = true
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+]
+fail_under = 0
+show_missing = true

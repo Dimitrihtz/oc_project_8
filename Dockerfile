@@ -8,7 +8,9 @@ RUN uv pip install --system --no-cache \
     "uvicorn[standard]>=0.34.0" \
     httpx>=0.27.0 \
     numpy>=1.24.0 \
-    onnxruntime>=1.17.0
+    onnxruntime>=1.17.0 \
+    "psycopg[binary]>=3.1.0" \
+    sqlalchemy>=2.0.0
 
 # Stage 2: Runtime
 FROM python:3.13-slim
