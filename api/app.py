@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import onnxruntime as ort
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from api.database import close_db, init_db
 from api.middleware import LOG_DIR, PredictionLoggingMiddleware
@@ -57,6 +57,9 @@ def health():
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(features: CreditFeatures):
+    if session is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
     data = features.model_dump()
     row = np.array([[data[f] for f in FEATURE_ORDER]], dtype=np.float32)
 

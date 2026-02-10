@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,6 +9,8 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from api.database import insert_prediction, is_db_enabled
+
+logger = logging.getLogger(__name__)
 
 LOG_DIR = Path("logs")
 LOG_FILE = LOG_DIR / "predictions.jsonl"
@@ -48,11 +51,14 @@ class PredictionLoggingMiddleware(BaseHTTPMiddleware):
             "error": response_data.get("detail") if response.status_code >= 400 else None,
         }
 
-        if is_db_enabled():
-            await insert_prediction(log_entry)
-        else:
-            with open(LOG_FILE, "a") as f:
-                f.write(json.dumps(log_entry) + "\n")
+        try:
+            if is_db_enabled():
+                await insert_prediction(log_entry)
+            else:
+                with open(LOG_FILE, "a") as f:
+                    f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            logger.exception("Failed to log prediction")
 
         return Response(
             content=response_body,

@@ -47,10 +47,14 @@ async def init_db():
     if database_url.startswith("postgresql://"):
         database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-    _engine = create_async_engine(database_url, pool_size=5, max_overflow=0)
-
-    async with _engine.begin() as conn:
-        await conn.run_sync(metadata.create_all)
+    try:
+        _engine = create_async_engine(database_url, pool_size=5, max_overflow=0)
+        async with _engine.begin() as conn:
+            await conn.run_sync(metadata.create_all)
+    except Exception:
+        logger.exception("Failed to connect to PostgreSQL — falling back to JSONL")
+        _engine = None
+        return
 
     logger.info("PostgreSQL prediction logging initialized")
 
