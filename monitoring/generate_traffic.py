@@ -1,7 +1,7 @@
-"""Generate synthetic production traffic with intentional data drift.
+"""Generate synthetic production predictions with intentional data drift.
 
-Writes 1000 prediction log entries directly to logs/predictions.jsonl,
-simulating 7 days of production traffic with drift on 3 features:
+Writes 1000 prediction entries directly to logs/predictions.jsonl,
+simulating 7 days of production predictions with drift on 3 features:
 - EXT_SOURCE_2: mean shifted down by 0.15 (credit bureau change)
 - DAYS_BIRTH: shifted +3000 toward younger applicants
 - AMT_ANNUITY: increased 20% (inflation)
@@ -9,7 +9,6 @@ simulating 7 days of production traffic with drift on 3 features:
 
 import json
 import pickle
-import random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -24,7 +23,6 @@ LOG_FILE = LOG_DIR / "predictions.jsonl"
 
 N_REQUESTS = 1000
 DAYS_SPAN = 7
-ERROR_RATE = 0.02
 OPTIMAL_THRESHOLD = 0.10
 
 FEATURE_COLUMNS = [
@@ -73,7 +71,6 @@ def generate_timestamps(n: int, rng: np.random.Generator) -> list[datetime]:
 
 def main():
     rng = np.random.default_rng(42)
-    random.seed(42)
 
     print(f"Loading model from {MODEL_PATH}...")
     model = load_model()
@@ -87,54 +84,31 @@ def main():
     entries = []
 
     print(f"Generating {N_REQUESTS} synthetic predictions...")
-    for i, ts in enumerate(timestamps):
-        is_error = rng.random() < ERROR_RATE
-        latency = float(rng.exponential(scale=50))  # ~50ms mean
+    for ts in timestamps:
+        features = sample_with_drift(ref_data, rng)
+        df = pd.DataFrame([features])
+        df = df[model.feature_name_]
 
-        if is_error:
-            entry = {
-                "timestamp": ts.isoformat(),
-                "status_code": 422,
-                "duration_ms": round(latency, 2),
-                "input_features": {},
-                "prediction": None,
-                "probability_default": None,
-                "credit_decision": None,
-                "error": "Simulated validation error",
-            }
-        else:
-            features = sample_with_drift(ref_data, rng)
-            df = pd.DataFrame([features])
-            df = df[model.feature_name_]
+        probability = float(model.predict_proba(df)[0, 1])
+        prediction = int(probability >= OPTIMAL_THRESHOLD)
+        credit_decision = "denied" if prediction == 1 else "approved"
 
-            probability = float(model.predict_proba(df)[0, 1])
-            prediction = int(probability >= OPTIMAL_THRESHOLD)
-            credit_decision = "denied" if prediction == 1 else "approved"
-
-            entry = {
-                "timestamp": ts.isoformat(),
-                "status_code": 200,
-                "duration_ms": round(latency, 2),
-                "input_features": features,
-                "prediction": prediction,
-                "probability_default": round(probability, 6),
-                "credit_decision": credit_decision,
-                "error": None,
-            }
-
-        entries.append(entry)
+        entries.append({
+            "timestamp": ts.isoformat(),
+            "input_features": features,
+            "prediction": prediction,
+            "probability_default": round(probability, 6),
+            "credit_decision": credit_decision,
+        })
 
     with open(LOG_FILE, "w") as f:
         for entry in entries:
             f.write(json.dumps(entry) + "\n")
 
-    n_errors = sum(1 for e in entries if e["status_code"] != 200)
     n_denied = sum(1 for e in entries if e["credit_decision"] == "denied")
-    n_ok = N_REQUESTS - n_errors
 
     print(f"\nWritten {N_REQUESTS} entries to {LOG_FILE}")
-    print(f"  Successful: {n_ok} | Errors: {n_errors} ({n_errors/N_REQUESTS:.1%})")
-    print(f"  Denied: {n_denied}/{n_ok} ({n_denied/n_ok:.1%})")
+    print(f"  Denied: {n_denied}/{N_REQUESTS} ({n_denied/N_REQUESTS:.1%})")
 
 
 if __name__ == "__main__":

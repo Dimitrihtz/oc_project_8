@@ -65,13 +65,10 @@ class PredictionResponse(BaseModel):
 class PredictionLog(BaseModel):
     id: int
     timestamp: datetime
-    status_code: int
-    duration_ms: float
     input_features: dict | None = None
     prediction: int | None = None
     probability_default: float | None = None
     credit_decision: str | None = None
-    error: str | None = None
 
 
 class HealthResponse(BaseModel):

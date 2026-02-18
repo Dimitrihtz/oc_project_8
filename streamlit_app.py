@@ -238,27 +238,25 @@ if page == "History":
     df["timestamp"] = pd.to_datetime(df["timestamp"])
 
     # --- Summary metrics ---
-    successful = df[df["status_code"] == 200]
-
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     col1.metric("Total Predictions", len(df))
-    col2.metric("Successful", len(successful))
-    if len(successful) > 0:
-        approval_rate = (successful["credit_decision"] == "approved").mean()
-        col3.metric("Approval Rate", f"{approval_rate:.0%}")
-        col4.metric("Avg Latency", f"{successful['duration_ms'].mean():.1f} ms")
+    if len(df) > 0:
+        approval_rate = (df["credit_decision"] == "approved").mean()
+        col2.metric("Approval Rate", f"{approval_rate:.0%}")
+        denied_count = (df["credit_decision"] == "denied").sum()
+        col3.metric("Denied", denied_count)
     else:
-        col3.metric("Approval Rate", "N/A")
-        col4.metric("Avg Latency", "N/A")
+        col2.metric("Approval Rate", "N/A")
+        col3.metric("Denied", "N/A")
 
     st.divider()
 
     # --- Charts ---
-    if len(successful) > 0:
+    if len(df) > 0:
         chart_col1, chart_col2 = st.columns(2)
 
         with chart_col1:
-            decision_counts = successful["credit_decision"].value_counts()
+            decision_counts = df["credit_decision"].value_counts()
             fig_pie = px.pie(
                 names=decision_counts.index,
                 values=decision_counts.values,
@@ -271,7 +269,7 @@ if page == "History":
 
         with chart_col2:
             fig_hist = px.histogram(
-                successful,
+                df,
                 x="probability_default",
                 nbins=30,
                 title="Probability Distribution",
@@ -288,33 +286,16 @@ if page == "History":
             )
             st.plotly_chart(fig_hist, use_container_width=True)
 
-        # --- Latency over time ---
-        fig_latency = px.scatter(
-            successful,
-            x="timestamp",
-            y="duration_ms",
-            title="Response Latency Over Time",
-            color_discrete_sequence=["#9b59b6"],
-        )
-        fig_latency.update_layout(
-            height=300, margin=dict(t=40, b=20),
-            xaxis_title="Time",
-            yaxis_title="Duration (ms)",
-        )
-        st.plotly_chart(fig_latency, use_container_width=True)
-
     st.divider()
 
     # --- Data table ---
     st.subheader("Recent Predictions")
 
     display_df = df[
-        ["id", "timestamp", "credit_decision", "probability_default",
-         "prediction", "duration_ms", "status_code", "error"]
+        ["id", "timestamp", "credit_decision", "probability_default", "prediction"]
     ].copy()
     display_df.columns = [
-        "ID", "Timestamp", "Decision", "Probability",
-        "Class", "Latency (ms)", "Status", "Error",
+        "ID", "Timestamp", "Decision", "Probability", "Class",
     ]
 
     st.dataframe(display_df, use_container_width=True, hide_index=True)
