@@ -4,6 +4,10 @@ Binary credit default prediction system built with LightGBM, served through a Fa
 
 The model predicts whether a loan applicant is likely to default, returning a probability score and an **approved/denied** decision based on an optimized threshold of **0.10**.
 
+## GitHub Repository
+
+https://github.com/Dimitrihtz/oc_project_8/tree/main
+
 ## Architecture
 
 ```
@@ -26,18 +30,18 @@ The model predicts whether a loan applicant is likely to default, returning a pr
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| `EXT_SOURCES_MEAN` | Mean of external credit scores (0–1) |
-| `CREDIT_TERM` | Annuity / credit amount ratio (0–1) |
-| `EXT_SOURCE_3` | External source 3 score (0–1) |
-| `GOODS_PRICE_CREDIT_PERCENT` | Goods price as % of credit (0–1.5) |
-| `INSTAL_AMT_PAYMENT_sum` | Sum of installment payments |
-| `AMT_ANNUITY` | Loan annuity amount |
+| Feature                          | Description                           |
+| -------------------------------- | ------------------------------------- |
+| `EXT_SOURCES_MEAN`               | Mean of external credit scores (0–1)  |
+| `CREDIT_TERM`                    | Annuity / credit amount ratio (0–1)   |
+| `EXT_SOURCE_3`                   | External source 3 score (0–1)         |
+| `GOODS_PRICE_CREDIT_PERCENT`     | Goods price as % of credit (0–1.5)    |
+| `INSTAL_AMT_PAYMENT_sum`         | Sum of installment payments           |
+| `AMT_ANNUITY`                    | Loan annuity amount                   |
 | `POS_CNT_INSTALMENT_FUTURE_mean` | Mean count of future POS installments |
-| `DAYS_BIRTH` | Client age in days (negative) |
-| `EXT_SOURCES_WEIGHTED` | Weighted external sources (0–3) |
-| `EXT_SOURCE_2` | External source 2 score (0–1) |
+| `DAYS_BIRTH`                     | Client age in days (negative)         |
+| `EXT_SOURCES_WEIGHTED`           | Weighted external sources (0–3)       |
+| `EXT_SOURCE_2`                   | External source 2 score (0–1)         |
 
 ## Prerequisites
 
@@ -70,10 +74,10 @@ Copy the example environment file and edit as needed:
 cp .env.example .env
 ```
 
-| Variable | Description | Default |
-|---|---|---|
+| Variable       | Description                  | Default                                |
+| -------------- | ---------------------------- | -------------------------------------- |
 | `DATABASE_URL` | PostgreSQL connection string | _(none — falls back to JSONL logging)_ |
-| `API_URL` | API base URL (for Streamlit) | `http://localhost:8000` |
+| `API_URL`      | API base URL (for Streamlit) | `http://localhost:8000`                |
 
 ## Usage
 
@@ -87,11 +91,11 @@ The API will be available at `http://localhost:8000`. Interactive docs at `/docs
 
 ### API Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/health` | Health check (model loaded status) |
-| `POST` | `/predict` | Get credit decision for an applicant |
-| `GET` | `/predictions` | List prediction history (requires DB) |
+| Method | Path           | Description                           |
+| ------ | -------------- | ------------------------------------- |
+| `GET`  | `/health`      | Health check (model loaded status)    |
+| `POST` | `/predict`     | Get credit decision for an applicant  |
+| `GET`  | `/predictions` | List prediction history (requires DB) |
 
 #### Example prediction request
 
@@ -129,6 +133,7 @@ uv run --extra frontend streamlit run streamlit_app.py
 ```
 
 The dashboard provides:
+
 - Interactive feature sliders to submit predictions
 - Gauge chart visualizing default probability against the threshold
 - Prediction history with approval rate metrics and distribution charts
@@ -140,6 +145,7 @@ docker compose up -d
 ```
 
 This starts:
+
 - **PostgreSQL 16** on port 5432
 - **FastAPI** on port 8000 (with health checks)
 
@@ -156,6 +162,7 @@ uv run --extra test --extra api pytest tests/ -v --cov=api --cov-report=term-mis
 ```
 
 The test suite covers:
+
 - Health endpoint validation
 - Model loading and shape verification
 - Valid prediction responses (status, fields, ranges, decision logic)
