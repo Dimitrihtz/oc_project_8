@@ -1,17 +1,19 @@
 import logging
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from sqlalchemy import (
     Column,
     DateTime,
     Double,
-    Float,
     Integer,
     MetaData,
     SmallInteger,
     String,
     Table,
-    Text,
     desc,
     func,
     insert,
@@ -29,13 +31,27 @@ predictions = Table(
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("timestamp", DateTime(timezone=True), nullable=False, server_default=func.now()),
-    Column("status_code", SmallInteger, nullable=False),
-    Column("duration_ms", Float, nullable=False),
     Column("input_features", JSONB),
     Column("prediction", SmallInteger),
     Column("probability_default", Double),
     Column("credit_decision", String(10)),
-    Column("error", Text),
+)
+
+reference_data = Table(
+    "reference_data",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("TARGET", SmallInteger, nullable=False),
+    Column("EXT_SOURCES_MEAN", Double, nullable=False),
+    Column("CREDIT_TERM", Double, nullable=False),
+    Column("EXT_SOURCE_3", Double, nullable=False),
+    Column("GOODS_PRICE_CREDIT_PERCENT", Double, nullable=False),
+    Column("INSTAL_AMT_PAYMENT_sum", Double, nullable=False),
+    Column("AMT_ANNUITY", Double, nullable=False),
+    Column("POS_CNT_INSTALMENT_FUTURE_mean", Double, nullable=False),
+    Column("DAYS_BIRTH", Integer, nullable=False),
+    Column("EXT_SOURCES_WEIGHTED", Double, nullable=False),
+    Column("EXT_SOURCE_2", Double, nullable=False),
 )
 
 _engine: AsyncEngine | None = None
@@ -83,13 +99,10 @@ async def insert_prediction(log_entry: dict):
             await conn.execute(
                 insert(predictions).values(
                     timestamp=log_entry["timestamp"],
-                    status_code=log_entry["status_code"],
-                    duration_ms=log_entry["duration_ms"],
                     input_features=log_entry["input_features"],
                     prediction=log_entry.get("prediction"),
                     probability_default=log_entry.get("probability_default"),
                     credit_decision=log_entry.get("credit_decision"),
-                    error=log_entry.get("error"),
                 )
             )
     except Exception:
